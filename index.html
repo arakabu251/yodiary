@@ -7,47 +7,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --bg: #f0f2f5; --header: #2c3e50; }
-        body { font-family: 'sans-serif'; margin: 0; background: var(--bg); color: #333; padding-bottom: 60px; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); color: #333; padding-bottom: 60px; }
         header { background: var(--header); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .settings-btn { font-size: 24px; background: none; border: none; color: white; cursor: pointer; }
+        .settings-btn { font-size: 24px; background: none; border: none; color: white; }
         .container { padding: 15px; max-width: 800px; margin: 0 auto; }
         
-        /* 入力エリア */
-        .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        #textInput { width: 100%; min-height: 150px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; line-height: 1.6; outline: none; box-sizing: border-box; margin-bottom: 10px; overflow-y: auto; }
-        #textInput:empty:before { content: attr(placeholder); color: #aaa; }
-
-        /* リアルタイムプレビュー枠 */
-        #realtimePreview { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; border: 1px dashed #ccc; padding: 5px; border-radius: 8px; min-height: 50px; background: #fafafa; }
-        .preview-item { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
-
         /* カレンダー */
         .cal-area { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 4px; }
         .day-dot { width: 22px; height: 22px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; }
         .day-active { background: #3498db; color: white; font-weight: bold; }
 
-        /* 保存カードの写真 (1列2枚) */
+        /* 入力エリア */
+        .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        #textInput { width: 100%; min-height: 150px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; outline: none; box-sizing: border-box; background: #fff; }
+
+        /* リアルタイム表示 */
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .preview-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .preview-vid-box { width: 100%; margin-top: 10px; background: #000; border-radius: 8px; overflow: hidden; }
+
+        /* 保存後のカード */
+        .entry-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .image-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; }
-        .video-box { margin-top: 10px; background: #000; border-radius: 8px; overflow: hidden; }
-        video { width: 100%; display: block; }
 
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; font-size: 14px; }
+        /* 操作ボタン */
+        .upload-btns { display: flex; gap: 10px; margin: 15px 0; }
+        .up-btn { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; font-size: 13px; cursor: pointer; text-align: center; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
         .btn-save { background: #27ae60; }
         .btn-pdf { background: #e74c3c; }
 
-        /* 設定画面 */
-        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; box-sizing: border-box; overflow-y: auto; }
-        .set-row { margin-bottom: 25px; border-bottom: 1px solid #444; padding-bottom: 15px; }
-        label { display: block; margin-bottom: 10px; font-size: 0.9rem; color: #bbb; }
+        /* 設定 */
+        #settingsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; overflow-y: auto; }
+        .set-row { margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 15px; }
         select, input[type="text"] { width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; }
-        .marker-box { display: flex; gap: 15px; }
-        .m-btn { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; cursor: pointer; }
 
-        /* ロック */
         #lockScreen { position: fixed; inset: 0; background: #1a1a1a; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #pinBox { width: 160px; text-align: center; font-size: 28px; padding: 12px; border-radius: 8px; border: none; margin-bottom: 20px; letter-spacing: 5px; }
+        #pinBox { width: 160px; text-align: center; font-size: 28px; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
     </style>
 </head>
 <body onload="init()">
@@ -59,7 +57,7 @@
 </div>
 
 <header>
-    <div style="font-weight:bold; font-size:1.1rem;">🌞 陽の日記</div>
+    <div style="font-weight:bold;">🌞 陽の日記</div>
     <button class="settings-btn" onclick="toggleSet()">⚙️</button>
 </header>
 
@@ -67,12 +65,16 @@
     <div class="cal-area" id="calList"></div>
 
     <div class="editor">
-        <div id="dateTag" style="font-weight:bold; color:#666; margin-bottom:10px;"></div>
-        <div id="textInput" contenteditable="true" placeholder="今日のできごと..."></div>
+        <div id="dateTag" style="font-weight:bold; color:#666; margin-bottom:8px;"></div>
+        <div id="textInput" contenteditable="true" placeholder="今日の内容..."></div>
         
-        <div id="realtimePreview"></div>
+        <div id="photoPreview" class="preview-grid"></div>
+        <div id="videoPreview"></div>
         
-        <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="margin-bottom:15px; width:100%;" onchange="handlePreview()">
+        <div class="upload-btns">
+            <label class="up-btn">📸 写真を追加<input type="file" id="imgInp" accept="image/*" multiple hidden onchange="handleMed()"></label>
+            <label class="up-btn">🎥 動画を追加<input type="file" id="vidInp" accept="video/*" multiple hidden onchange="handleMed()"></label>
+        </div>
         
         <div class="btn-group">
             <button onclick="save()" class="btn btn-save">保存</button>
@@ -84,49 +86,23 @@
 
 <div id="settingsModal">
     <button onclick="toggleSet()" style="float:right; color:white; background:none; border:none; font-size:35px;">✕</button>
-    <h2 style="margin-top:0;">⚙️ 各種設定</h2>
-    
+    <h2>⚙️ 設定</h2>
+    <div class="set-row"><label>Gmail</label><input type="text" id="gmailInput" onchange="saveGmail()"></div>
+    <div class="set-row"><label>フォント</label><select id="fontF" onchange="applyS()"><option value="sans-serif">ゴシック</option><option value="serif">明朝体</option><option value="cursive">手書き</option></select></div>
+    <div class="set-row"><label>サイズ</label><select id="fontS" onchange="applyS()"><option value="16px">標準</option><option value="22px">大</option><option value="28px">特大</option></select></div>
     <div class="set-row">
-        <label>Google連携 (ドライブ保存用Gmail)</label>
-        <input type="text" id="gmailInput" placeholder="example@gmail.com" onchange="saveGmail()">
-        <p style="font-size:12px; color:#aaa; margin-top:5px;">※ここで入力したアドレスにバックアップを紐付けます</p>
-    </div>
-
-    <div class="set-row">
-        <label>フォント種類</label>
-        <select id="fontFamilySet" onchange="applyStyle()">
-            <option value="sans-serif">ゴシック体（標準）</option>
-            <option value="'Hiragino Mincho ProN', serif">明朝体</option>
-            <option value="cursive">手書き風</option>
-        </select>
-    </div>
-
-    <div class="set-row">
-        <label>文字サイズ</label>
-        <select id="fontSizeSet" onchange="applyStyle()">
-            <option value="16px">標準</option>
-            <option value="22px">大きく</option>
-            <option value="28px">かなり大きく</option>
-        </select>
-    </div>
-
-    <div class="set-row">
-        <label>マーカー機能（文字をなぞってから選択）</label>
-        <div class="marker-box">
-            <div onclick="mark('yellow')" class="m-btn" style="background:yellow;"></div>
-            <div onclick="mark('#7fff00')" class="m-btn" style="background:#7fff00;"></div>
-            <div onclick="mark('cyan')" class="m-btn" style="background:cyan;"></div>
-            <div onclick="mark('transparent')" class="m-btn" style="background:white; border-color:#999;"></div>
+        <label>マーカー</label>
+        <div style="display:flex; gap:10px;">
+            <div onclick="mark('yellow')" style="width:40px; height:40px; background:yellow; border-radius:50%;"></div>
+            <div onclick="mark('#7fff00')" style="width:40px; height:40px; background:#7fff00; border-radius:50%;"></div>
+            <div onclick="mark('transparent')" style="width:40px; height:40px; background:white; border-radius:50%; border:1px solid #ccc;"></div>
         </div>
-    </div>
-
-    <div class="set-row">
-        <label>データの書き出し</label>
-        <button onclick="exportJSON()" class="btn" style="background:#3498db; width:100%;">全データを保存する</button>
     </div>
 </div>
 
 <script>
+    let currentFiles = [];
+
     function init() {
         if(!localStorage.getItem("yo_pin")) localStorage.setItem("yo_pin", "1234");
         document.getElementById("dateTag").innerText = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
@@ -135,49 +111,56 @@
     }
     function unlock() {
         if(document.getElementById("pinBox").value === localStorage.getItem("yo_pin")) document.getElementById("lockScreen").style.display="none";
-        else alert("PINが違います");
+        else alert("PINエラー");
     }
-    function toggleSet() {
-        const s = document.getElementById("settingsModal");
-        s.style.display = (s.style.display === "block") ? "none" : "block";
-    }
+    function toggleSet() { const s = document.getElementById("settingsModal"); s.style.display = (s.style.display === "block") ? "none" : "block"; }
     function saveGmail() { localStorage.setItem("yo_gmail", document.getElementById("gmailInput").value); }
-    function applyStyle() {
-        const body = document.body;
-        body.style.fontFamily = document.getElementById("fontFamilySet").value;
-        document.getElementById("textInput").style.fontSize = document.getElementById("fontSizeSet").value;
+    function applyS() {
+        document.body.style.fontFamily = document.getElementById("fontF").value;
+        document.getElementById("textInput").style.fontSize = document.getElementById("fontS").value;
     }
     function mark(c) { document.execCommand("hiliteColor", false, c); }
 
-    // リアルタイム表示機能
-    async function handlePreview() {
-        const pre = document.getElementById("realtimePreview");
-        pre.innerHTML = "";
-        const files = document.getElementById("mediaInput").files;
-        for(let f of files) {
+    // 写真と動画を保持してプレビュー
+    async function handleMed() {
+        const photoDiv = document.getElementById("photoPreview");
+        const videoDiv = document.getElementById("videoPreview");
+        photoDiv.innerHTML = ""; videoDiv.innerHTML = "";
+        
+        const imgFiles = document.getElementById("imgInp").files;
+        const vidFiles = document.getElementById("vidInp").files;
+
+        for(let f of imgFiles) {
             const url = URL.createObjectURL(f);
-            if(f.type.startsWith('image')) {
-                pre.innerHTML += `<img src="${url}" class="preview-item">`;
-            } else {
-                pre.innerHTML += `<div class="preview-item" style="background:#000; color:white; font-size:10px; display:flex; align-items:center; justify-content:center;">動画</div>`;
-            }
+            photoDiv.innerHTML += `<img src="${url}" class="preview-img">`;
+        }
+        for(let f of vidFiles) {
+            const url = URL.createObjectURL(f);
+            videoDiv.innerHTML += `<div class="preview-vid-box"><video src="${url}" controls muted style="width:100%; display:block;"></video></div>`;
         }
     }
 
     async function save() {
         const text = document.getElementById("textInput").innerHTML;
-        const files = document.getElementById("mediaInput").files;
-        if(!text.trim() && files.length === 0) return;
+        const imgFiles = document.getElementById("imgInp").files;
+        const vidFiles = document.getElementById("vidInp").files;
+        
+        if(!text.trim() && imgFiles.length === 0 && vidFiles.length === 0) return;
         
         let mArr = [];
-        for(let f of files) {
-            const b64 = await new Promise(r => {
-                const reader = new FileReader();
-                reader.onload = e => r(e.target.result);
-                reader.readAsDataURL(f);
-            });
-            mArr.push({ type: f.type.startsWith('v') ? 'v' : 'i', data: b64 });
-        }
+        const process = async (files, type) => {
+            for(let f of files) {
+                const b64 = await new Promise(r => {
+                    const reader = new FileReader();
+                    reader.onload = e => r(e.target.result);
+                    reader.readAsDataURL(f);
+                });
+                mArr.push({ type: type, data: b64 });
+            }
+        };
+
+        await process(imgFiles, 'i');
+        await process(vidFiles, 'v');
 
         const data = { id: Date.now(), date: new Date().toLocaleDateString('ja-JP'), day: new Date().getDate(), content: text, media: mArr };
         let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
@@ -185,9 +168,11 @@
         localStorage.setItem("yo_data", JSON.stringify(db));
         
         document.getElementById("textInput").innerHTML = "";
-        document.getElementById("mediaInput").value = "";
-        document.getElementById("realtimePreview").innerHTML = "";
-        render(); alert("日記を保存しました！");
+        document.getElementById("imgInp").value = "";
+        document.getElementById("vidInp").value = "";
+        document.getElementById("photoPreview").innerHTML = "";
+        document.getElementById("videoPreview").innerHTML = "";
+        render(); alert("保存完了！");
     }
 
     function render() {
@@ -205,19 +190,13 @@
 
         db.forEach(item => {
             const card = document.createElement("div");
-            card.className = "editor"; card.id = "card-"+item.id;
-            let mHtml = "";
+            card.className = "entry-card"; card.id = "card-"+item.id;
             let imgs = item.media.filter(m => m.type === 'i');
             let vids = item.media.filter(m => m.type === 'v');
+            let mHtml = imgs.length > 0 ? `<div class="image-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
+            vids.forEach(v => mHtml += `<div class="preview-vid-box"><video controls playsinline src="${v.data}" style="width:100%;"></video></div>`);
 
-            if(imgs.length > 0) {
-                mHtml += '<div class="image-grid">';
-                imgs.forEach(i => mHtml += `<img src="${i.data}">`);
-                mHtml += '</div>';
-            }
-            vids.forEach(v => mHtml += `<div class="video-box"><video controls playsinline src="${v.data}"></video></div>`);
-
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; color:#888; font-size:12px; margin-bottom:10px;">${item.date}<button onclick="del(${item.id})" style="border:none; color:red; background:none;">削除</button></div><div style="white-space:pre-wrap;">${item.content}</div>${mHtml}`;
+            card.innerHTML = `<div style="display:flex; justify-content:space-between; color:#888; font-size:11px;">${item.date}<button onclick="del(${item.id})" style="border:none; color:red; background:none;">削除</button></div><div style="margin-top:10px; white-space:pre-wrap;">${item.content}</div>${mHtml}`;
             log.appendChild(card);
         });
     }
@@ -225,13 +204,8 @@
     function del(id) { if(confirm("削除しますか？")){ let db = JSON.parse(localStorage.getItem("yo_data")).filter(d=>d.id!==id); localStorage.setItem("yo_data", JSON.stringify(db)); render(); } }
     function makePDF() {
         const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
-        if(db.length === 0) return alert("日記がありません");
-        const opt = { margin: 10, filename: `陽の日記_${db[0].date}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().from(document.getElementById("card-"+db[0].id)).set(opt).save();
-    }
-    function exportJSON() {
-        const b = new Blob([localStorage.getItem("yo_data")], {type: "application/json"});
-        const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "yodiary_backup.json"; a.click();
+        if(db.length === 0) return;
+        html2pdf().from(document.getElementById("card-"+db[0].id)).save(`日記_${db[0].date}.pdf`);
     }
 </script>
 </body>
