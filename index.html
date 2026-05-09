@@ -1,1 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陽の日記 - 生涯保存版</title>
+    <style>
+        :root {
+            --main-bg: #fdfbf7;
+            --diary-card: #ffffff;
+            --accent-color: #8d6e63;
+            --text-color: #3e2723;
+            --marker-color: rgba(255, 235, 59, 0.5); /* マーカーの色 */
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        /* タイトル部分：太字(bold)に修正 */
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: bold; 
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        .input-group {
+            background: var(--diary-card);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        /* マーカー付きテキストのスタイル */
+        .marked {
+            background-color: var(--marker-color);
+            font-weight: bold;
+            padding: 2px 4px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="marked">陽の日記</span></h1>
 
+        <div class="input-group">
+            <label for="email">メールアドレス（保存用）</label>
+            <input type="email" id="email" placeholder="example@gmail.com">
+
+            <label for="diary-text">今日のできごと</label>
+            <textarea id="diary-text" rows="5" placeholder="今日はどんな一日でしたか？"></textarea>
+            
+            <button onclick="saveDiary()">日記を保存する</button>
+        </div>
+
+        <div id="status-message" style="text-align: center; color: var(--accent-color); font-weight: bold;"></div>
+    </div>
+
+    <script>
+        function saveDiary() {
+            const email = document.getElementById('email').value;
+            const text = document.getElementById('diary-text').value;
+            const status = document.getElementById('status-message');
+
+            if (!email || !text) {
+                alert('メールアドレスと日記の内容を入力してください。');
+                return;
+            }
+
+            // 保存処理のシミュレーション
+            status.textContent = "保存しています...";
+            
+            setTimeout(() => {
+                status.textContent = "✅ 日記が保存されました（" + email + " 宛に控えを送信しました）";
+                document.getElementById('diary-text').value = "";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
