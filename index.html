@@ -1,1 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>陽の日記</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --bg: #fdfbf7; --header: #2c3e50; --accent: #3498db; --marker: #ffff00; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); color: #333; padding-bottom: 80px; transition: 0.3s; }
+        header { background: var(--header); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .menu-btn { font-size: 28px; background: none; border: none; color: white; cursor: pointer; padding: 0 5px; }
+        .header-title { font-weight: bold; font-size: 1.2rem; }
+        .marker { background: linear-gradient(transparent 60%, var(--marker) 60%); font-weight: bold; }
+        .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+        .date-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        #datePicker { border: 1px solid #ddd; border-radius: 5px; padding: 5px; font-size: 16px; font-family: inherit; }
+        .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 2px solid transparent; }
+        .editing { border-color: #f39c12 !important; background: #fffdf5; }
+        #textInput { width: 100%; min-height: 150px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; outline: none; box-sizing: border-box; background: #fff; line-height: 1.6; overflow-y: auto; }
+        .entry-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .entry-title { font-size: 1.2rem; font-weight: bold; color: var(--header); margin-bottom: 8px; display: block; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .image-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+        .upload-btns { display: flex; gap: 10px; margin: 15px 0; }
+        .up-btn { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; font-size: 13px; text-align: center; cursor: pointer; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; }
+        .btn-save { background: #27ae60; }
+        .btn-saving { background: #bdc3c7 !important; pointer-events: none; }
+        .btn-pdf { background: #e74c3c; }
+        #settingsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; overflow-y: auto; }
+        .setting-item { margin-bottom: 20px; }
+        .setting-item label { display: block; margin-bottom: 8px; font-size: 14px; }
+        .setting-item input, .setting-item select { width: 100%; padding: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
+        .guide-box { background: #333; padding: 20px; border-radius: 10px; font-size: 14px; line-height: 1.8; margin-top: 40px; border-left: 5px solid var(--accent); }
+        .app-info { margin-top: 30px; font-size: 11px; color: #888; text-align: center; border-top: 1px solid #444; padding-top: 10px; }
+    </style>
+</head>
+<body onload="init()">
 
+<header>
+    <div class="header-title"><span class="marker">🌞 陽の日記</span></div>
+    <button class="menu-btn" onclick="toggleSet()">&#9776;</button>
+</header>
+
+<div class="container">
+    <div class="date-selector">
+        📅 <input type="date" id="datePicker" onchange="changeDate()">
+        <span id="displayDate" style="font-weight:bold; color:#666;"></span>
+    </div>
+
+    <div class="editor" id="editorContainer">
+        <div id="editNotice" style="display:none; color:#f39c12; font-size:12px; font-weight:bold; margin-bottom:5px;">⚠️ 過去の日記を編集しています</div>
+        <div id="textInput" contenteditable="true" placeholder="1行目は自動で見出しになります。"></div>
+        <div id="photoPreview" class="preview-grid"></div>
+        <div class="upload-btns">
+            <label class="up-btn">📸 写真<input type="file" id="imgInp" accept="image/*" multiple hidden onchange="handleMed()"></label>
+            <label class="up-btn">🎥 動画<input type="file" id="vidInp" accept="video/*" multiple hidden onchange="handleMed()"></label>
+        </div>
+        <div class="btn-group">
+            <button onclick="save()" class="btn btn-save" id="saveBtn">保存</button>
+            <button onclick="makePDF()" class="btn btn-pdf">PDF作成</button>
+            <button onclick="cancelEdit()" id="cancelBtn" class="btn" style="background:#95a5a6; display:none;">編集中止</button>
+        </div>
+    </div>
+    
+    <div id="diaryLog"></div>
+</div>
+
+<div id="settingsModal">
+    <button onclick="toggleSet()" style="float:right; color:white; background:none; border:none; font-size:35px;">✕</button>
+    <h2>メニュー・設定</h2>
+    <div class="setting-item">📧 <label>保存用メールアドレス</label><input type="email" id="mailBox" onchange="saveMail()"></div>
+    <div class="setting-item"><button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 全データバックアップ（Googleドライブへ）</button></div>
+    <div class="setting-item"><label>フォント</label><select id="fontF" onchange="applyS()"><option value="sans-serif">ゴシック</option><option value="serif">明朝体</option></select></div>
+    <div class="setting-item"><label>文字サイズ</label><select id="fontS" onchange="applyS()"><option value="16px">標準</option><option value="22px">大</option><option value="28px">特大</option></select></div>
+    <div class="guide-box">
+        <strong>📘 陽の日記 使い方ガイド</strong><br>
+        1. <strong>保存場所:</strong> 日記はお使いのブラウザに保存されます。ネット上には送信されません。<br>
+        2. <strong>バックアップ:</strong> 「全データバックアップ」からGoogleドライブへ保存してください。<br>
+        3. <strong>過去の記録:</strong> 日付の横の📅から過去の日付を選んで記録できます。<br>
+        4. <strong>編集・削除:</strong> 各日記の[編集]からいつでも修正できます。
+    </div>
+    <div class="app-info">作成日: 2026年5月10日 / Version 1.6.0</div>
+</div>
+
+<script>
+    let editingId = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+
+    function init() {
+        document.getElementById("datePicker").value = selectedDate;
+        document.getElementById("mailBox").value = localStorage.getItem("yo_mail") || "";
+        updateDisplayDate();
+        render();
+    }
+
+    function changeDate() {
+        selectedDate = document.getElementById("datePicker").value;
+        updateDisplayDate();
+    }
+
+    function updateDisplayDate() {
+        const d = new Date(selectedDate);
+        const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+        document.getElementById("displayDate").innerText = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${dayNames[d.getDay()]})`;
+    }
+
+    function saveMail() { localStorage.setItem("yo_mail", document.getElementById("mailBox").value); }
+    function toggleSet() { const s = document.getElementById("settingsModal"); s.style.display = (s.style.display === "block") ? "none" : "block"; }
+    function applyS() {
+        document.body.style.fontFamily = document.getElementById("fontF").value;
+        document.getElementById("textInput").style.fontSize = document.getElementById("fontS").value;
+    }
+
+    async function handleMed() {
+        const pDiv = document.getElementById("photoPreview");
+        pDiv.innerHTML = "";
+        for(let f of document.getElementById("imgInp").files) {
+            pDiv.innerHTML += `<img src="${URL.createObjectURL(f)}" class="preview-img" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px;">`;
+        }
+    }
+
+    async function save() {
+        const btn = document.getElementById("saveBtn");
+        const textInp = document.getElementById("textInput");
+        const content = textInp.innerHTML.trim();
+        const imgFiles = document.getElementById("imgInp").files;
+
+        if(!content && imgFiles.length === 0) return;
+
+        btn.classList.add("btn-saving");
+        btn.innerText = "保存中...";
+
+        try {
+            let mArr = [];
+            for(let f of imgFiles) {
+                const b64 = await new Promise((r, rej) => { 
+                    const rd = new FileReader(); 
+                    rd.onload = e => r(e.target.result); 
+                    rd.onerror = rej;
+                    rd.readAsDataURL(f); 
+                });
+                mArr.push({ type: 'i', data: b64 });
+            }
+
+            let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+            if(editingId) {
+                const idx = db.findIndex(d => d.id === editingId);
+                if(idx !== -1) {
+                    db[idx].content = content;
+                    db[idx].date = selectedDate;
+                    if(mArr.length > 0) db[idx].media = mArr;
+                }
+            } else {
+                db.unshift({ id: Date.now(), date: selectedDate, content: content, media: mArr });
+            }
+
+            localStorage.setItem("yo_data", JSON.stringify(db));
+            
+            // 成功時の処理
+            textInp.innerHTML = "";
+            document.getElementById("imgInp").value = "";
+            document.getElementById("photoPreview").innerHTML = "";
+            editingId = null;
+            document.getElementById("editorContainer").classList.remove("editing");
+            document.getElementById("editNotice").style.display = "none";
+            document.getElementById("cancelBtn").style.display = "none";
+            render();
+            alert("保存しました");
+
+        } catch (e) {
+            console.error(e);
+            alert("保存エラーが発生しました。写真の枚数を減らすか、一度バックアップを取ってください。");
+        } finally {
+            btn.classList.remove("btn-saving");
+            btn.innerText = "保存";
+        }
+    }
+
+    function render() {
+        const log = document.getElementById("diaryLog");
+        const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+        log.innerHTML = "";
+        
+        if(db.length === 0) {
+            log.innerHTML = "<p style='text-align:center; color:#999; padding:20px;'>日記はまだありません。</p>";
+            return;
+        }
+
+        db.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+            const card = document.createElement("div");
+            card.className = "entry-card";
+            
+            let tempDiv = document.createElement("div");
+            tempDiv.innerHTML = item.content;
+            let text = tempDiv.innerText;
+            let title = text.split("\n")[0] || "無題";
+            let body = item.content.replace(title, "").trim();
+            
+            let imgs = (item.media || []).filter(m => m.type === 'i');
+            let mHtml = imgs.length > 0 ? `<div class="image-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
+            
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:5px;">
+                    ${item.date}
+                    <div>
+                        <span onclick="editEntry(${item.id})" style="color:var(--accent); cursor:pointer; margin-right:10px;">[編集]</span>
+                        <span onclick="del(${item.id})" style="color:red; cursor:pointer;">[削除]</span>
+                    </div>
+                </div>
+                <span class="entry-title">${title}</span>
+                <div style="font-size:0.95rem; color:#444; line-height:1.6;">${body}</div>
+                ${mHtml}
+            `;
+            log.appendChild(card);
+        });
+    }
+
+    function editEntry(id) {
+        const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+        const entry = db.find(d => d.id === id);
+        if(!entry) return;
+        editingId = id;
+        selectedDate = entry.date;
+        document.getElementById("datePicker").value = selectedDate;
+        document.getElementById("textInput").innerHTML = entry.content;
+        document.getElementById("editorContainer").classList.add("editing");
+        document.getElementById("editNotice").style.display = "block";
+        document.getElementById("cancelBtn").style.display = "block";
+        document.getElementById("saveBtn").innerText = "修正を保存";
+        updateDisplayDate();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function del(id) {
+        if(confirm("この日記を完全に削除しますか？")) {
+            let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+            db = db.filter(d => d.id !== id);
+            localStorage.setItem("yo_data", JSON.stringify(db));
+            render();
+        }
+    }
+
+    function cancelEdit() {
+        location.reload();
+    }
+
+    async function shareData() {
+        const data = localStorage.getItem("yo_data") || "[]";
+        const file = new File([new Blob([data], {type: 'application/json'})], "yodiary_backup.json");
+        if (navigator.share) await navigator.share({ files: [file], title: 'バックアップ' });
+    }
+
+    function makePDF() {
+        html2pdf().from(document.getElementById("diaryLog")).save(`陽の日記.pdf`);
+    }
+</script>
+</body>
+</html>
