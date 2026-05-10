@@ -30,7 +30,6 @@
         .btn-group { display: flex; gap: 10px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; }
         .btn-save { background: #27ae60; }
-        /* 保存中（グレー）のスタイル */
         .btn-saving { background: #bdc3c7 !important; cursor: not-allowed; }
         .btn-pdf { background: #e74c3c; }
         #settingsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; overflow-y: auto; }
@@ -79,8 +78,8 @@
     <div class="setting-item"><button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 全データバックアップ</button></div>
     <div class="setting-item"><label>フォント</label><select id="fontF" onchange="applyS()"><option value="sans-serif">ゴシック</option><option value="serif">明朝体</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><select id="fontS" onchange="applyS()"><option value="16px">標準</option><option value="22px">大</option><option value="28px">特大</option></select></div>
-    <div class="guide-box"><strong>📘 使い方ガイド</strong><br>・<strong>保存:</strong> ボタンがグレーの間は処理中です。<br>・<strong>日付:</strong> 過去の日記はカレンダーから選択。</div>
-    <div class="app-info">作成日: 2026年5月10日 / Version 1.3.1</div>
+    <div class="guide-box"><strong>📘 使い方ガイド</strong><br>・<strong>保存:</strong> 日記を書いたら保存ボタン。下の一覧に即反映されます。</div>
+    <div class="app-info">作成日: 2026年5月10日 / Version 1.3.2</div>
 </div>
 
 <script>
@@ -123,13 +122,13 @@
 
     async function save() {
         const btn = document.getElementById("saveBtn");
-        const html = document.getElementById("textInput").innerHTML;
+        const textInp = document.getElementById("textInput");
+        const html = textInp.innerHTML;
         const imgFiles = document.getElementById("imgInp").files;
         const vidFiles = document.getElementById("vidInp").files;
 
         if(!html.trim() && imgFiles.length === 0 && vidFiles.length === 0) return;
 
-        // ボタンをグレーにして無効化
         btn.classList.add("btn-saving");
         btn.innerText = "保存中...";
         btn.disabled = true;
@@ -156,16 +155,26 @@
 
             localStorage.setItem("yo_data", JSON.stringify(db));
             
-            // 完了演出
-            btn.innerText = "保存完了！";
-            setTimeout(() => {
-                location.reload(); // 画面を更新してリストに反映
-            }, 500);
+            // 入力欄をクリア
+            textInp.innerHTML = "";
+            document.getElementById("imgInp").value = "";
+            document.getElementById("vidInp").value = "";
+            document.getElementById("photoPreview").innerHTML = "";
+            document.getElementById("videoPreview").innerHTML = "";
+            editingId = null;
+            document.getElementById("editorContainer").classList.remove("editing");
+            document.getElementById("editNotice").style.display = "none";
+            document.getElementById("cancelBtn").style.display = "none";
+            btn.innerText = "保存";
+
+            // 一覧を再描画（リロードせずに更新）
+            render();
+            alert("保存しました");
 
         } catch (e) {
             alert("エラーが発生しました");
+        } finally {
             btn.classList.remove("btn-saving");
-            btn.innerText = "保存";
             btn.disabled = false;
         }
     }
@@ -175,19 +184,39 @@
         const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
         log.innerHTML = "";
         
-        // 日付順（新しい順）に並び替えて表示
+        // 日付順（新しい順）に表示
         db.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
             const card = document.createElement("div"); card.className = "entry-card";
             let lines = item.content.split(/<div>|<br>|\n/);
-            let title = lines[0].replace(/<\/?[^>]+(>|$)/g, "");
+            let title = lines[0].replace(/<\/?[^>]+(>|$)/g, "") || "無題";
             let body = item.content.replace(lines[0], "");
-            let imgs = item.media.filter(m => m.type === 'i');
-            let vids = item.media.filter(m => m.type === 'v');
+            let imgs = (item.media || []).filter(m => m.type === 'i');
+            let vids = (item.media || []).filter(m => m.type === 'v');
             let mHtml = imgs.length > 0 ? `<div class="image-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
             vids.forEach(v => mHtml += `<div class="preview-vid-box"><video controls playsinline src="${v.data}" style="width:100%;"></video></div>`);
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:5px;">${item.date}<span onclick="editEntry(${item.id})" style="color:var(--accent); cursor:pointer;">[編集]</span></div><span class="entry-title">${title || "無題"}</span><div style="white-space:pre-wrap; font-size:0.95rem; color:#444;">${body}</div>${mHtml}`;
+            
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:5px;">
+                    ${item.date}
+                    <div>
+                        <span onclick="editEntry(${item.id})" style="color:var(--accent); cursor:pointer; margin-right:10px;">[編集]</span>
+                        <span onclick="del(${item.id})" style="color:red; cursor:pointer;">[削除]</span>
+                    </div>
+                </div>
+                <span class="entry-title">${title}</span>
+                <div style="white-space:pre-wrap; font-size:0.95rem; color:#444;">${body}</div>
+                ${mHtml}`;
             log.appendChild(card);
         });
+    }
+
+    function del(id) {
+        if(confirm("この日記を完全に削除しますか？")) {
+            let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+            db = db.filter(d => d.id !== id);
+            localStorage.setItem("yo_data", JSON.stringify(db));
+            render();
+        }
     }
 
     function editEntry(id) {
@@ -202,14 +231,25 @@
         document.getElementById("cancelBtn").style.display = "block";
         document.getElementById("saveBtn").innerText = "修正を保存";
         updateDisplayDate();
-        window.scrollTo(0,0);
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
-    function cancelEdit() { location.reload(); }
+
+    function cancelEdit() {
+        editingId = null;
+        document.getElementById("textInput").innerHTML = "";
+        document.getElementById("editorContainer").classList.remove("editing");
+        document.getElementById("editNotice").style.display = "none";
+        document.getElementById("cancelBtn").style.display = "none";
+        document.getElementById("saveBtn").innerText = "保存";
+        updateDisplayDate();
+    }
+
     async function shareData() {
         const data = localStorage.getItem("yo_data") || "[]";
         const file = new File([new Blob([data], {type: 'application/json'})], "yodiary_backup.json");
         if (navigator.share) await navigator.share({ files: [file], title: 'バックアップ' });
     }
+
     function makePDF() {
         const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
         if(db.length === 0) return;
