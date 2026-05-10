@@ -10,42 +10,33 @@
         body { font-family: sans-serif; margin: 0; background: var(--bg); color: #333; padding-bottom: 60px; }
         header { background: var(--header); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .menu-btn { font-size: 28px; background: none; border: none; color: white; cursor: pointer; line-height: 1; padding: 0 5px; }
-        
-        /* タイトルの太字とマーカー */
         .header-title { font-weight: bold; font-size: 1.2rem; }
         .marker { background: linear-gradient(transparent 60%, var(--marker) 60%); font-weight: bold; }
-
         .container { padding: 15px; max-width: 800px; margin: 0 auto; }
-        
-        /* 日付選択エリア */
         .date-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         #datePicker { border: 1px solid #ddd; border-radius: 5px; padding: 5px; font-size: 16px; font-family: inherit; }
-
         .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 2px solid transparent; }
         .editing { border-color: #f39c12; }
         #textInput { width: 100%; min-height: 150px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; outline: none; box-sizing: border-box; background: #fff; line-height: 1.6; }
-        
         .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .preview-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
         .preview-vid-box { width: 100%; margin-top: 10px; background: #000; border-radius: 8px; overflow: hidden; }
-        
         .entry-title { font-size: 1.2rem; font-weight: bold; color: var(--header); margin-bottom: 8px; display: block; border-left: 4px solid var(--accent); padding-left: 10px; }
         .entry-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .image-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; }
-        
         .upload-btns { display: flex; gap: 10px; margin: 15px 0; }
         .up-btn { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; font-size: 13px; text-align: center; cursor: pointer; }
         .btn-group { display: flex; gap: 10px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; }
         .btn-save { background: #27ae60; }
+        /* 保存中（グレー）のスタイル */
+        .btn-saving { background: #bdc3c7 !important; cursor: not-allowed; }
         .btn-pdf { background: #e74c3c; }
-        
         #settingsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; overflow-y: auto; }
         .setting-item { margin-bottom: 20px; }
         .setting-item label { display: block; margin-bottom: 8px; font-size: 14px; }
         .setting-item input, .setting-item select { width: 100%; padding: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
-        
         .guide-box { background: #333; padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-top: 30px; border-left: 4px solid var(--accent); }
         .app-info { margin-top: 20px; font-size: 11px; color: #888; text-align: center; }
     </style>
@@ -84,30 +75,12 @@
 <div id="settingsModal">
     <button onclick="toggleSet()" style="float:right; color:white; background:none; border:none; font-size:35px;">✕</button>
     <h2>メニュー・設定</h2>
-    
-    <div class="setting-item">
-        <label>📧 保存用メールアドレス</label>
-        <input type="email" id="mailBox" placeholder="example@gmail.com" onchange="saveMail()">
-    </div>
-
-    <div class="setting-item">
-        <button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 全データバックアップ（Googleドライブへ）</button>
-    </div>
-
+    <div class="setting-item"><label>📧 保存用メールアドレス</label><input type="email" id="mailBox" onchange="saveMail()"></div>
+    <div class="setting-item"><button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 全データバックアップ</button></div>
     <div class="setting-item"><label>フォント</label><select id="fontF" onchange="applyS()"><option value="sans-serif">ゴシック</option><option value="serif">明朝体</option></select></div>
     <div class="setting-item"><label>文字サイズ</label><select id="fontS" onchange="applyS()"><option value="16px">標準</option><option value="22px">大</option><option value="28px">特大</option></select></div>
-    
-    <div class="guide-box">
-        <strong>📘 陽の日記 使い方ガイド</strong><br>
-        ・<strong>保存:</strong> 日記はブラウザ（スマホ本体）に保存されます。<br>
-        ・<strong>バックアップ:</strong> 「全データバックアップ」からGoogleドライブ等を選択して保存してください。<br>
-        ・<strong>過去の日付:</strong> カレンダーから日付を選ぶと、過去の日記を記録できます。<br>
-        ・<strong>編集:</strong> 保存された日記の[編集]を押すと修正・追記ができます。
-    </div>
-
-    <div class="app-info">
-        作成日: 2026年5月10日 / Version 1.3.0
-    </div>
+    <div class="guide-box"><strong>📘 使い方ガイド</strong><br>・<strong>保存:</strong> ボタンがグレーの間は処理中です。<br>・<strong>日付:</strong> 過去の日記はカレンダーから選択。</div>
+    <div class="app-info">作成日: 2026年5月10日 / Version 1.3.1</div>
 </div>
 
 <script>
@@ -149,33 +122,72 @@
     }
 
     async function save() {
+        const btn = document.getElementById("saveBtn");
         const html = document.getElementById("textInput").innerHTML;
         const imgFiles = document.getElementById("imgInp").files;
         const vidFiles = document.getElementById("vidInp").files;
+
         if(!html.trim() && imgFiles.length === 0 && vidFiles.length === 0) return;
 
-        let mArr = [];
-        const process = async (files, type) => {
-            for(let f of files) {
-                const b64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
-                mArr.push({ type: type, data: b64 });
+        // ボタンをグレーにして無効化
+        btn.classList.add("btn-saving");
+        btn.innerText = "保存中...";
+        btn.disabled = true;
+
+        try {
+            let mArr = [];
+            const process = async (files, type) => {
+                for(let f of files) {
+                    const b64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
+                    mArr.push({ type: type, data: b64 });
+                }
+            };
+            await process(imgFiles, 'i'); await process(vidFiles, 'v');
+
+            let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+            if(editingId) {
+                const index = db.findIndex(d => d.id === editingId);
+                db[index].content = html;
+                db[index].date = selectedDate;
+                if(mArr.length > 0) db[index].media = mArr;
+            } else {
+                db.unshift({ id: Date.now(), date: selectedDate, content: html, media: mArr });
             }
-        };
-        await process(imgFiles, 'i'); await process(vidFiles, 'v');
 
-        let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
-        if(editingId) {
-            const index = db.findIndex(d => d.id === editingId);
-            db[index].content = html;
-            db[index].date = selectedDate;
-            if(mArr.length > 0) db[index].media = mArr;
-        } else {
-            db.unshift({ id: Date.now(), date: selectedDate, content: html, media: mArr });
+            localStorage.setItem("yo_data", JSON.stringify(db));
+            
+            // 完了演出
+            btn.innerText = "保存完了！";
+            setTimeout(() => {
+                location.reload(); // 画面を更新してリストに反映
+            }, 500);
+
+        } catch (e) {
+            alert("エラーが発生しました");
+            btn.classList.remove("btn-saving");
+            btn.innerText = "保存";
+            btn.disabled = false;
         }
+    }
 
-        localStorage.setItem("yo_data", JSON.stringify(db));
-        alert("保存完了！");
-        location.reload();
+    function render() {
+        const log = document.getElementById("diaryLog");
+        const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+        log.innerHTML = "";
+        
+        // 日付順（新しい順）に並び替えて表示
+        db.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+            const card = document.createElement("div"); card.className = "entry-card";
+            let lines = item.content.split(/<div>|<br>|\n/);
+            let title = lines[0].replace(/<\/?[^>]+(>|$)/g, "");
+            let body = item.content.replace(lines[0], "");
+            let imgs = item.media.filter(m => m.type === 'i');
+            let vids = item.media.filter(m => m.type === 'v');
+            let mHtml = imgs.length > 0 ? `<div class="image-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
+            vids.forEach(v => mHtml += `<div class="preview-vid-box"><video controls playsinline src="${v.data}" style="width:100%;"></video></div>`);
+            card.innerHTML = `<div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:5px;">${item.date}<span onclick="editEntry(${item.id})" style="color:var(--accent); cursor:pointer;">[編集]</span></div><span class="entry-title">${title || "無題"}</span><div style="white-space:pre-wrap; font-size:0.95rem; color:#444;">${body}</div>${mHtml}`;
+            log.appendChild(card);
+        });
     }
 
     function editEntry(id) {
@@ -192,38 +204,16 @@
         updateDisplayDate();
         window.scrollTo(0,0);
     }
-
     function cancelEdit() { location.reload(); }
-
-    function render() {
-        const log = document.getElementById("diaryLog");
-        const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
-        log.innerHTML = "";
-        db.forEach(item => {
-            const card = document.createElement("div"); card.className = "entry-card";
-            let lines = item.content.split(/<div>|<br>|\n/);
-            let title = lines[0].replace(/<\/?[^>]+(>|$)/g, "");
-            let body = item.content.replace(lines[0], "");
-            let imgs = item.media.filter(m => m.type === 'i');
-            let vids = item.media.filter(m => m.type === 'v');
-            let mHtml = imgs.length > 0 ? `<div class="image-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
-            vids.forEach(v => mHtml += `<div class="preview-vid-box"><video controls playsinline src="${v.data}" style="width:100%;"></video></div>`);
-            
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; color:#888; font-size:11px; margin-bottom:5px;">${item.date}<span onclick="editEntry(${item.id})" style="color:var(--accent); cursor:pointer;">[編集]</span></div><span class="entry-title">${title || "無題"}</span><div style="white-space:pre-wrap; font-size:0.95rem; color:#444;">${body}</div>${mHtml}`;
-            log.appendChild(card);
-        });
-    }
-
     async function shareData() {
         const data = localStorage.getItem("yo_data") || "[]";
         const file = new File([new Blob([data], {type: 'application/json'})], "yodiary_backup.json");
-        if (navigator.share) await navigator.share({ files: [file], title: '陽の日記バックアップ' });
+        if (navigator.share) await navigator.share({ files: [file], title: 'バックアップ' });
     }
-
     function makePDF() {
         const db = JSON.parse(localStorage.getItem("yo_data") || "[]");
         if(db.length === 0) return;
-        html2pdf().from(document.body).save(`陽の日記_全部.pdf`);
+        html2pdf().from(document.getElementById("diaryLog")).save(`陽の日記.pdf`);
     }
 </script>
 </body>
