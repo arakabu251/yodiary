@@ -7,67 +7,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --bg: #fdfbf7; --header: #2c3e50; --accent: #3498db; --marker: #ffff00; }
+        * { box-sizing: border-box; } /* 全ての要素の幅計算を正確にする */
         body { font-family: sans-serif; margin: 0; background: var(--bg); color: #333; padding-bottom: 80px; }
         
-        /* ヘッダー */
-        header { background: var(--header); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header { background: var(--header); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .header-title { font-weight: bold; font-size: 1.2rem; }
         .marker { background: linear-gradient(transparent 60%, var(--marker) 60%); font-weight: bold; }
         .menu-btn { font-size: 28px; background: none; border: none; color: white; cursor: pointer; }
 
-        .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+        .container { padding: 10px; max-width: 800px; margin: 0 auto; }
         
-        /* 入力エリア */
         .date-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        #datePicker { border: 1px solid #ddd; border-radius: 5px; padding: 5px; font-size: 16px; font-family: inherit; }
+        #datePicker { border: 1px solid #ddd; border-radius: 5px; padding: 5px; font-size: 16px; }
         
-        .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 2px solid transparent; }
-        .editing-now { border-color: #f39c12 !important; background: #fffdf5; }
-        #textInput { width: 100%; min-height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; outline: none; box-sizing: border-box; background: #fff; line-height: 1.6; }
+        .editor { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        #textInput { width: 100%; min-height: 120px; border: 1px solid #ddd; border-radius: 8px; padding: 12px; font-size: 16px; outline: none; background: #fff; line-height: 1.6; }
         
-        /* プレビュー：ここも重ならないよう調整 */
-        .preview-area { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; }
-        .preview-item { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+        /* プレビュー */
+        .preview-area { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .preview-item { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
 
-        /* ボタン */
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        .btn { flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; text-align: center; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; text-align: center; font-size: 14px; }
         .btn-save { background: #27ae60; }
-        .btn-saving { background: #bdc3c7 !important; cursor: not-allowed; }
+        .btn-saving { background: #bdc3c7 !important; cursor: not-allowed; } /* 保存中のグレー */
         .btn-media { background: #34495e; }
 
-        /* 日記カード */
-        .entry-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .entry-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
         .entry-title { font-size: 1.1rem; font-weight: bold; color: var(--header); border-left: 4px solid var(--accent); padding-left: 10px; margin-bottom: 10px; display: block; }
         
-        /* 写真グリッド：1行2枚固定・重なり防止 */
+        /* 【重要】写真2枚並び：gridを使い確実に2カラムに分割 */
         .photo-grid { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
+            grid-template-columns: 1fr 1fr; /* 1:1の比率で2枚並べる */
+            gap: 8px; 
             margin-top: 10px; 
             width: 100%;
         }
         .photo-grid img { 
             width: 100%; 
-            height: auto;
             aspect-ratio: 1/1; 
             object-fit: cover; 
             border-radius: 8px; 
-            border: 1px solid #eee;
             display: block;
         }
 
-        /* 動画：1枠（100%）表示 */
-        .video-container { width: 100%; margin-top: 10px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid #eee; }
+        /* 動画：1枚で100%表示 */
+        .video-container { width: 100%; margin-top: 10px; border-radius: 8px; overflow: hidden; background: #000; }
         .video-container video { width: 100%; display: block; }
 
-        /* 設定画面 */
+        /* 設定メニュー */
         #settingsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; color: white; padding: 25px; overflow-y: auto; }
         .setting-item { margin-bottom: 20px; }
-        .setting-item label { display: block; margin-bottom: 8px; font-size: 14px; color: #bbb; }
-        .setting-item input, .setting-item select { width: 100%; padding: 12px; border-radius: 6px; border: none; font-size: 16px; }
-        .guide-box { background: #333; padding: 15px; border-radius: 8px; font-size: 13px; margin-top: 30px; border-left: 4px solid var(--accent); line-height: 1.6; }
+        .setting-item input, .setting-item select { width: 100%; padding: 12px; border-radius: 6px; border: none; margin-top: 5px; font-size: 16px; }
     </style>
 </head>
 <body onload="init()">
@@ -80,19 +72,18 @@
 <div class="container">
     <div class="date-selector">
         📅 <input type="date" id="datePicker" onchange="updateDate()">
-        <span id="displayDate" style="font-weight:bold; color:#666;"></span>
+        <span id="displayDate"></span>
     </div>
 
     <div class="editor" id="editorWrap">
-        <div id="editLabel" style="display:none; color:#f39c12; font-size:12px; font-weight:bold; margin-bottom:5px;">💡 編集モード：修正後に保存を押してください</div>
-        <div id="textInput" contenteditable="true" placeholder="見出しを1行目に..."></div>
+        <div id="textInput" contenteditable="true" placeholder="1行目は見出し..."></div>
         <div id="previewArea" class="preview-area"></div>
         <div class="btn-group">
-            <label class="btn btn-media">📸 写真/動画を追加
+            <label class="btn btn-media">📸 追加
                 <input type="file" id="fileInp" accept="image/*,video/*" multiple hidden onchange="handleFiles()">
             </label>
             <button onclick="save()" class="btn btn-save" id="saveBtn">保存</button>
-            <button onclick="cancelEdit()" id="cancelBtn" class="btn" style="background:#95a5a6; display:none;">編集を中止</button>
+            <button onclick="location.reload()" id="cancelBtn" class="btn" style="background:#95a5a6; display:none;">中止</button>
         </div>
     </div>
     
@@ -101,44 +92,36 @@
 
 <div id="settingsModal">
     <button onclick="toggleSet()" style="float:right; color:white; background:none; border:none; font-size:35px;">✕</button>
-    <h2 style="border-bottom: 1px solid #444; padding-bottom: 10px;">メニュー</h2>
+    <h2>設定</h2>
     <div class="setting-item">
-        <label>📧 Gmailアドレス</label>
-        <input type="email" id="mailBox" placeholder="example@gmail.com" onchange="saveMail()">
+        <label>📧 Gmail</label>
+        <input type="email" id="mailBox" onchange="localStorage.setItem('yo_mail', this.value)">
     </div>
     <div class="setting-item">
-        <button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 全データをバックアップ</button>
+        <button class="btn" style="background:var(--accent); width:100%;" onclick="shareData()">📤 ドライブへバックアップ</button>
     </div>
     <div class="setting-item">
         <label>フォント</label>
         <select id="fontF" onchange="applySettings()">
-            <option value="sans-serif">ゴシック体</option>
-            <option value="serif">明朝体</option>
-        </select>
-    </div>
-    <div class="setting-item">
-        <label>文字サイズ</label>
-        <select id="fontS" onchange="applySettings()">
-            <option value="16px">標準</option>
-            <option value="20px">大</option>
-            <option value="26px">特大</option>
+            <option value="sans-serif">ゴシック</option>
+            <option value="serif">明朝</option>
         </select>
     </div>
     <div class="setting-item">
         <button class="btn" style="background:#e74c3c; width:100%;" onclick="makePDF()">📄 PDF保存</button>
     </div>
-    <div style="text-align:center; margin-top:50px;">
-        <button onclick="if(confirm('全消去しますか？')){localStorage.clear(); location.reload();}" style="color:#666; background:none; border:1px solid #666; padding:5px; font-size:11px;">データを初期化</button>
+    <div style="text-align:center; margin-top:40px;">
+        <button onclick="localStorage.clear(); location.reload();" style="color:#666; background:none; border:1px solid #666; padding:5px; font-size:10px;">リセット</button>
     </div>
 </div>
 
 <script>
     let currentFiles = [];
     let editingId = null;
-    let selectedDate = new Date().toISOString().split('T')[0];
 
     function init() {
-        document.getElementById("datePicker").value = selectedDate;
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("datePicker").value = today;
         document.getElementById("mailBox").value = localStorage.getItem("yo_mail") || "";
         updateDate();
         applySettings();
@@ -146,20 +129,15 @@
     }
 
     function updateDate() {
-        selectedDate = document.getElementById("datePicker").value;
-        const d = new Date(selectedDate);
-        const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
-        document.getElementById("displayDate").innerText = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${dayNames[d.getDay()]})`;
+        const d = new Date(document.getElementById("datePicker").value);
+        const days = ["日","月","火","水","木","金","土"];
+        document.getElementById("displayDate").innerText = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${days[d.getDay()]})`;
     }
 
     function toggleSet() { const s = document.getElementById("settingsModal"); s.style.display = (s.style.display === "block") ? "none" : "block"; }
-    function saveMail() { localStorage.setItem("yo_mail", document.getElementById("mailBox").value); }
 
     function applySettings() {
-        const f = document.getElementById("fontF").value;
-        const s = document.getElementById("fontS").value;
-        document.body.style.fontFamily = f;
-        document.getElementById("textInput").style.fontSize = s;
+        document.body.style.fontFamily = document.getElementById("fontF").value;
     }
 
     function handleFiles() {
@@ -173,8 +151,7 @@
                 const type = f.type.startsWith('image') ? 'i' : 'v';
                 currentFiles.push({ type: type, data: e.target.result });
                 let el = document.createElement(type === 'i' ? 'img' : 'video');
-                el.src = e.target.result;
-                el.className = "preview-item";
+                el.src = e.target.result; el.className = "preview-item";
                 preview.appendChild(el);
             };
             reader.readAsDataURL(f);
@@ -187,31 +164,33 @@
         if(!content.trim() && currentFiles.length === 0) return;
 
         btn.classList.add("btn-saving");
-        btn.innerText = "書き込み中...";
+        btn.innerText = "保存中...";
         btn.disabled = true;
 
         setTimeout(() => {
             try {
                 let db = JSON.parse(localStorage.getItem("yo_data") || "[]");
+                
+                // 【重要】容量エラー対策：編集時は一旦消して空きを作る
                 if(editingId) {
-                    const idx = db.findIndex(d => d.id === editingId);
-                    if(idx !== -1) {
-                        db[idx].content = content;
-                        db[idx].date = selectedDate;
-                        if(currentFiles.length > 0) db[idx].media = currentFiles;
-                    }
-                } else {
-                    db.unshift({ id: Date.now(), date: selectedDate, content: content, media: currentFiles });
+                    db = db.filter(d => d.id !== editingId);
                 }
+
+                const newData = {
+                    id: editingId || Date.now(),
+                    date: document.getElementById("datePicker").value,
+                    content: content,
+                    media: currentFiles.length > 0 ? currentFiles : (editingId ? db.find(d => d.id === editingId)?.media : [])
+                };
+
+                db.unshift(newData);
                 localStorage.setItem("yo_data", JSON.stringify(db));
                 location.reload();
             } catch (e) {
-                alert("容量がいっぱいです。動画を短くしてください。");
-                btn.classList.remove("btn-saving");
-                btn.innerText = "保存";
-                btn.disabled = false;
+                alert("容量がいっぱいです。不要な日記を削除するか、動画を短くしてください。");
+                btn.classList.remove("btn-saving"); btn.innerText = "保存"; btn.disabled = false;
             }
-        }, 500);
+        }, 300);
     }
 
     function render() {
@@ -228,8 +207,10 @@
             const imgs = (item.media || []).filter(m => m.type === 'i');
             const vids = (item.media || []).filter(m => m.type === 'v');
 
+            // 写真2枚並び（grid）
             let imgHtml = imgs.length > 0 ? `<div class="photo-grid">${imgs.map(i => `<img src="${i.data}">`).join('')}</div>` : "";
-            let vidHtml = vids.length > 0 ? vids.map(v => `<div class="video-container"><video src="${v.data}" controls playsinline></video></div>`).join('') : "";
+            // 動画1枚並び
+            let vidHtml = vids.map(v => `<div class="video-container"><video src="${v.data}" controls playsinline></video></div>`).join('');
 
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; font-size:11px; color:#888; margin-bottom:10px;">
@@ -252,18 +233,13 @@
         const entry = db.find(d => d.id === id);
         if(!entry) return;
         editingId = id;
-        selectedDate = entry.date;
-        document.getElementById("datePicker").value = selectedDate;
+        document.getElementById("datePicker").value = entry.date;
         document.getElementById("textInput").innerHTML = entry.content;
-        document.getElementById("editorWrap").classList.add("editing-now");
-        document.getElementById("editLabel").style.display = "block";
         document.getElementById("cancelBtn").style.display = "block";
-        document.getElementById("saveBtn").innerText = "修正を保存";
+        document.getElementById("saveBtn").innerText = "修正完了";
         updateDate();
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
-
-    function cancelEdit() { location.reload(); }
 
     function del(id) {
         if(confirm("削除しますか？")) {
@@ -276,8 +252,8 @@
 
     async function shareData() {
         const data = localStorage.getItem("yo_data") || "[]";
-        const file = new File([new Blob([data], {type: 'application/json'})], "陽の日記_backup.json", {type: 'application/json'});
-        if (navigator.share) await navigator.share({ files: [file], title: '陽の日記バックアップ' });
+        const file = new File([new Blob([data], {type: 'application/json'})], "陽の日記.json", {type: 'application/json'});
+        if (navigator.share) await navigator.share({ files: [file], title: 'バックアップ' });
     }
 
     function makePDF() { html2pdf().from(document.getElementById("diaryLog")).save(`陽の日記.pdf`); }
